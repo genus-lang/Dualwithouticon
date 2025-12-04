@@ -7,11 +7,28 @@ import { AchievementsBadges } from './profile/AchievementsBadges';
 import { PerformanceGraph } from './profile/PerformanceGraph';
 import { ActivityFeed } from './profile/ActivityFeed';
 
-interface ProfilePageProps {
-  onNavigate: (page: 'home' | 'arena' | 'questions' | 'match') => void;
+interface NavigationProps {
+  onStartCoding: () => void;
+  onStartMatch: () => void;
+  onQuestionBank: () => void;
+  onProfile: () => void;
+  onAnnouncements: () => void;
+  onCommunity: () => void;
+  onLeaderboard: () => void;
+  onContests: () => void;
+  onBlog: () => void;
+  onPrivacy: () => void;
+  onTerms: () => void;
+  onDocs: () => void;
+  onSupport: () => void;
+  onHome: () => void;
 }
 
-export function ProfilePage({ onNavigate }: ProfilePageProps) {
+interface ProfilePageProps {
+  navigationProps: NavigationProps;
+}
+
+export function ProfilePage({ navigationProps }: ProfilePageProps) {
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white overflow-hidden flex flex-col">
       {/* Animated Background */}
@@ -133,7 +150,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
       {/* Content */}
       <div className="relative z-10 flex flex-col h-screen">
         {/* Header */}
-        <ProfileHeader onNavigate={onNavigate} />
+        <ProfileHeader onNavigate={navigationProps} />
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">

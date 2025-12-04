@@ -7,7 +7,14 @@ import {
   SelectValue,
 } from './ui/select';
 
-export function Footer() {
+interface FooterProps {
+  onPrivacy?: () => void;
+  onTerms?: () => void;
+  onDocs?: () => void;
+  onSupport?: () => void;
+}
+
+export function Footer({ onPrivacy, onTerms, onDocs, onSupport }: FooterProps = {}) {
   return (
     <footer className="relative border-t border-[#00FFFF]/20 bg-[#0D0D0D]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -68,12 +75,12 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-white/60 hover:text-[#00FFFF] transition-colors text-sm">
+                <a href="#" className="text-white/60 hover:text-[#00FFFF] transition-colors text-sm" onClick={onPrivacy}>
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="#" className="text-white/60 hover:text-[#00FFFF] transition-colors text-sm">
+                <a href="#" className="text-white/60 hover:text-[#00FFFF] transition-colors text-sm" onClick={onTerms}>
                   Terms of Service
                 </a>
               </li>
@@ -100,12 +107,12 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-white/60 hover:text-[#00FFFF] transition-colors text-sm">
+                <a href="#" className="text-white/60 hover:text-[#00FFFF] transition-colors text-sm" onClick={onDocs}>
                   Documentation
                 </a>
               </li>
               <li>
-                <a href="#" className="text-white/60 hover:text-[#00FFFF] transition-colors text-sm">
+                <a href="#" className="text-white/60 hover:text-[#00FFFF] transition-colors text-sm" onClick={onSupport}>
                   Support
                 </a>
               </li>

@@ -6,8 +6,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
 
 interface NavbarProps {
   onStartCoding?: () => void;
@@ -17,72 +24,160 @@ interface NavbarProps {
   onAnnouncements?: () => void;
   onCommunity?: () => void;
   onLeaderboard?: () => void;
+  onContests?: () => void;
+  onBlog?: () => void;
+  onPrivacy?: () => void;
+  onTerms?: () => void;
+  onDocs?: () => void;
+  onSupport?: () => void;
+  onHome?: () => void;
 }
 
-export function Navbar({ onStartCoding, onStartMatch, onQuestionBank, onProfile, onAnnouncements, onCommunity, onLeaderboard }: NavbarProps) {
+export function Navbar({ 
+  onStartCoding, 
+  onStartMatch, 
+  onQuestionBank, 
+  onProfile, 
+  onAnnouncements, 
+  onCommunity, 
+  onLeaderboard, 
+  onContests, 
+  onBlog,
+  onPrivacy,
+  onTerms,
+  onDocs,
+  onSupport,
+  onHome,
+}: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glassmorphism border-b border-[#00FFFF]/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <Code2 className="w-8 h-8 text-[#00FFFF]" />
-            <span className="text-xl tracking-wider" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
-              Code<span className="text-[#00FFFF]">Arena</span>
-            </span>
-          </div>
+          {/* Logo - Clickable Brand Block */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={onHome}
+                  className="flex items-center gap-2 group hover:opacity-90 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#00FFFF]/50 rounded-md px-2 py-1"
+                  aria-label="Go to Home"
+                >
+                  <Code2 className="w-8 h-8 text-[#00FFFF] group-hover:drop-shadow-[0_0_8px_rgba(0,255,255,0.8)] transition-all" />
+                  <span className="text-xl tracking-wider group-hover:drop-shadow-[0_0_8px_rgba(0,255,255,0.6)] transition-all" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+                    Code<span className="text-[#00FFFF]">Arena</span>
+                  </span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="bg-[#1A1A1A]/95 backdrop-blur-xl border-[#00FFFF]/30">
+                <p style={{ fontFamily: 'JetBrains Mono, monospace' }}>Go to Home</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#how-it-works" className="text-white/80 hover:text-[#00FFFF] transition-colors">
-              How It Works
-            </a>
+          <div className="hidden md:flex items-center gap-6">
+            <button 
+              onClick={onContests}
+              className="text-white/80 hover:text-[#00FFFF] transition-colors"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            >
+              Contests
+            </button>
             <button 
               onClick={onQuestionBank}
               className="text-white/80 hover:text-[#00FFFF] transition-colors"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
             >
-              Question Bank
+              Problem Set
             </button>
             <button 
               onClick={onLeaderboard}
               className="text-white/80 hover:text-[#00FFFF] transition-colors"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
             >
               Leaderboard
             </button>
             <button 
-              onClick={onAnnouncements}
-              className="text-white/80 hover:text-[#00FFFF] transition-colors"
-            >
-              Announcements
-            </button>
-            <button 
               onClick={onCommunity}
               className="text-white/80 hover:text-[#00FFFF] transition-colors"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
             >
               Community
             </button>
+
+            {/* More Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button 
+                  className="flex items-center gap-1 text-white/80 hover:text-[#00FFFF] transition-colors focus:outline-none"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                >
+                  More
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="end" 
+                className="bg-[#1A1A1A]/95 backdrop-blur-xl border-[#00FFFF]/20 min-w-[200px]"
+              >
+                <DropdownMenuItem 
+                  onClick={onBlog}
+                  className="text-white hover:bg-[#00FFFF]/10 cursor-pointer"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                >
+                  📰 Blog
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="text-white hover:bg-[#00FFFF]/10 cursor-pointer"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                >
+                  💡 How It Works
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={onDocs}
+                  className="text-white hover:bg-[#00FFFF]/10 cursor-pointer"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                >
+                  📚 Documentation
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={onSupport}
+                  className="text-white hover:bg-[#00FFFF]/10 cursor-pointer"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                >
+                  🆘 Support
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem 
+                  onClick={onPrivacy}
+                  className="text-white/70 hover:bg-[#00FFFF]/10 cursor-pointer text-sm"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                >
+                  Privacy Policy
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={onTerms}
+                  className="text-white/70 hover:bg-[#00FFFF]/10 cursor-pointer text-sm"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                >
+                  Terms of Service
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={onAnnouncements}
+                  className="text-white/70 hover:bg-[#00FFFF]/10 cursor-pointer text-sm"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                >
+                  Announcements
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          {/* Desktop Buttons */}
-          <div className="hidden md:flex items-center gap-4">
-            <Button 
-              variant="default" 
-              onClick={onStartCoding}
-              className="bg-[#00FFFF] text-black hover:bg-[#00FFFF]/90 shadow-[0_0_20px_rgba(0,255,255,0.3)]"
-            >
-              Start Dual Coding
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={onStartMatch}
-              className="glassmorphism border-[#A259FF]/30 text-white hover:border-[#A259FF] hover:bg-[#A259FF]/10"
-            >
-              Friendly Match
-            </Button>
-            
-            {/* Avatar Dropdown */}
+          {/* Desktop - Avatar Only */}
+          <div className="hidden md:flex items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none">
@@ -93,18 +188,26 @@ export function Navbar({ onStartCoding, onStartMatch, onQuestionBank, onProfile,
                   <ChevronDown className="w-4 h-4 text-[#00FFFF]" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#1A1A1A] border-[#00FFFF]/20 min-w-[200px]">
+              <DropdownMenuContent align="end" className="bg-[#1A1A1A]/95 backdrop-blur-xl border-[#00FFFF]/20 min-w-[200px]">
                 <DropdownMenuItem 
                   onClick={onProfile}
                   className="text-white hover:bg-[#00FFFF]/10 cursor-pointer"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
                 >
-                  Profile
+                  👤 Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-white hover:bg-[#00FFFF]/10 cursor-pointer">
-                  Settings
+                <DropdownMenuItem 
+                  className="text-white hover:bg-[#00FFFF]/10 cursor-pointer"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                >
+                  ⚙️ Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-white hover:bg-[#00FFFF]/10 cursor-pointer">
-                  Logout
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem 
+                  className="text-white hover:bg-[#00FFFF]/10 cursor-pointer"
+                  style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                >
+                  🚪 Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -121,56 +224,76 @@ export function Navbar({ onStartCoding, onStartMatch, onQuestionBank, onProfile,
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 space-y-4 border-t border-[#00FFFF]/20">
-            <a href="#how-it-works" className="block text-white/80 hover:text-[#00FFFF] transition-colors">
-              How It Works
-            </a>
+          <div className="md:hidden py-4 space-y-3 border-t border-[#00FFFF]/20">
+            <button 
+              onClick={onContests}
+              className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors px-2 py-2"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            >
+              Contests
+            </button>
             <button 
               onClick={onQuestionBank}
-              className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors"
+              className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors px-2 py-2"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
             >
-              Question Bank
+              Problem Set
             </button>
             <button 
               onClick={onLeaderboard}
-              className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors"
+              className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors px-2 py-2"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
             >
               Leaderboard
             </button>
             <button 
-              onClick={onAnnouncements}
-              className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors"
-            >
-              Announcements
-            </button>
-            <button 
               onClick={onCommunity}
-              className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors"
+              className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors px-2 py-2"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
             >
               Community
             </button>
+            
+            <div className="h-px bg-white/10 my-2" />
+            
+            <button 
+              onClick={onBlog}
+              className="block w-full text-left text-white/60 hover:text-[#00FFFF] transition-colors px-2 py-2 text-sm"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            >
+              📰 Blog
+            </button>
+            <button 
+              onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+              className="block w-full text-left text-white/60 hover:text-[#00FFFF] transition-colors px-2 py-2 text-sm"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            >
+              💡 How It Works
+            </button>
+            <button 
+              onClick={onDocs}
+              className="block w-full text-left text-white/60 hover:text-[#00FFFF] transition-colors px-2 py-2 text-sm"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            >
+              📚 Documentation
+            </button>
+            <button 
+              onClick={onSupport}
+              className="block w-full text-left text-white/60 hover:text-[#00FFFF] transition-colors px-2 py-2 text-sm"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            >
+              🆘 Support
+            </button>
+            
+            <div className="h-px bg-white/10 my-2" />
+            
             <button 
               onClick={onProfile}
-              className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors"
+              className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors px-2 py-2"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
             >
-              Profile
+              👤 Profile
             </button>
-            <div className="flex flex-col gap-3 pt-4">
-              <Button 
-                variant="default"
-                onClick={onStartCoding}
-                className="bg-[#00FFFF] text-black hover:bg-[#00FFFF]/90 w-full"
-              >
-                Start Dual Coding
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={onStartMatch}
-                className="glassmorphism border-[#A259FF]/30 text-white w-full"
-              >
-                Friendly Match
-              </Button>
-            </div>
           </div>
         )}
       </div>

@@ -1,16 +1,33 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { AnnouncementHeader } from './announcement/AnnouncementHeader';
+import { Navbar } from './Navbar';
 import { PlatformFilter } from './announcement/PlatformFilter';
 import { ContestCard } from './announcement/ContestCard';
 import { UpcomingWidget } from './announcement/UpcomingWidget';
 import { PastContestsTable } from './announcement/PastContestsTable';
 
-interface AnnouncementPageProps {
-  onExit: () => void;
+interface NavigationProps {
+  onStartCoding: () => void;
+  onStartMatch: () => void;
+  onQuestionBank: () => void;
+  onProfile: () => void;
+  onAnnouncements: () => void;
+  onCommunity: () => void;
+  onLeaderboard: () => void;
+  onContests: () => void;
+  onBlog: () => void;
+  onPrivacy: () => void;
+  onTerms: () => void;
+  onDocs: () => void;
+  onSupport: () => void;
+  onHome: () => void;
 }
 
-export function AnnouncementPage({ onExit }: AnnouncementPageProps) {
+interface AnnouncementPageProps {
+  navigationProps: NavigationProps;
+}
+
+export function AnnouncementPage({ navigationProps }: AnnouncementPageProps) {
   const [selectedPlatform, setSelectedPlatform] = useState('all');
   const [sortBy, setSortBy] = useState('upcoming');
 
@@ -196,7 +213,7 @@ export function AnnouncementPage({ onExit }: AnnouncementPageProps) {
       {/* Content */}
       <div className="relative z-10 flex flex-col h-screen">
         {/* Header */}
-        <AnnouncementHeader onNavigateHome={onExit} />
+        <Navbar {...navigationProps} />
 
         {/* Platform Filter */}
         <PlatformFilter

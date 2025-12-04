@@ -1,16 +1,33 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { ArenaHeader } from './arena/ArenaHeader';
+import { Navbar } from './Navbar';
 import { CodeEditor } from './arena/CodeEditor';
 import { AIPanel } from './arena/AIPanel';
 import { ChatPanel } from './arena/ChatPanel';
 import { IOConsole } from './arena/IOConsole';
 
-interface ArenaPageProps {
-  onExit: () => void;
+interface NavigationProps {
+  onStartCoding: () => void;
+  onStartMatch: () => void;
+  onQuestionBank: () => void;
+  onProfile: () => void;
+  onAnnouncements: () => void;
+  onCommunity: () => void;
+  onLeaderboard: () => void;
+  onContests: () => void;
+  onBlog: () => void;
+  onPrivacy: () => void;
+  onTerms: () => void;
+  onDocs: () => void;
+  onSupport: () => void;
+  onHome: () => void;
 }
 
-export function ArenaPage({ onExit }: ArenaPageProps) {
+interface ArenaPageProps {
+  navigationProps: NavigationProps;
+}
+
+export function ArenaPage({ navigationProps }: ArenaPageProps) {
   const [activeEditor, setActiveEditor] = useState<'left' | 'right'>('left');
 
   // Switch active editor every 10 seconds for demo
@@ -96,8 +113,8 @@ export function ArenaPage({ onExit }: ArenaPageProps) {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col h-full">
-        {/* Header */}
-        <ArenaHeader onExit={onExit} />
+        {/* Navbar */}
+        <Navbar {...navigationProps} />
 
         {/* Main Arena */}
         <div className="flex-1 flex overflow-hidden">

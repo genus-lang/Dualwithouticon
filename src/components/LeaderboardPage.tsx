@@ -1,22 +1,52 @@
-import { useState } from "react";
-import { motion } from "motion/react";
-import { LeaderboardHeader } from "./leaderboard/LeaderboardHeader";
-import { HeroFilterBar } from "./leaderboard/HeroFilterBar";
-import { TopThreePodium } from "./leaderboard/TopThreePodium";
-import { LeaderboardTable } from "./leaderboard/LeaderboardTable";
-import { SidebarPanel } from "./leaderboard/SidebarPanel";
+import { useState } from 'react';
+import { motion } from 'motion/react';
+import { Navbar } from './Navbar';
+import { TopUtilityStrip } from './TopUtilityStrip';
+import { MobileUtilityFAB } from './MobileUtilityFAB';
+import { LeaderboardHeader } from './leaderboard/LeaderboardHeader';
+import { HeroFilterBar } from './leaderboard/HeroFilterBar';
+import { TopThreePodium } from './leaderboard/TopThreePodium';
+import { LeaderboardTable } from './leaderboard/LeaderboardTable';
+import { SidebarPanel } from './leaderboard/SidebarPanel';
 
-interface LeaderboardPageProps {
-  onProfile?: () => void;
-  onHome?: () => void;
+interface NavigationProps {
+  onStartCoding: () => void;
+  onStartMatch: () => void;
+  onQuestionBank: () => void;
+  onProfile: () => void;
+  onAnnouncements: () => void;
+  onCommunity: () => void;
+  onLeaderboard: () => void;
+  onContests: () => void;
+  onBlog: () => void;
+  onPrivacy: () => void;
+  onTerms: () => void;
+  onDocs: () => void;
+  onSupport: () => void;
+  onHome: () => void;
 }
 
-export function LeaderboardPage({ onProfile, onHome }: LeaderboardPageProps = {}) {
+interface LeaderboardPageProps {
+  navigationProps: NavigationProps;
+}
+
+export function LeaderboardPage({ navigationProps }: LeaderboardPageProps) {
   const [timeFilter, setTimeFilter] = useState("week");
   const [sortBy, setSortBy] = useState("rating");
   const [activeFilter, setActiveFilter] = useState("matches");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Handle utility strip actions
+  const handleSearch = () => {
+    console.log('Search clicked');
+    // Search functionality can be wired up here
+  };
+
+  const handleSettings = () => {
+    console.log('Settings clicked');
+    // Settings modal can be triggered here
+  };
 
   // Mock data for top 3
   const topThree = [
@@ -126,13 +156,29 @@ export function LeaderboardPage({ onProfile, onHome }: LeaderboardPageProps = {}
 
       {/* Content */}
       <div className="relative z-10">
+        <Navbar {...navigationProps} />
+        
+        {/* Top Utility Strip - Desktop Only */}
+        <TopUtilityStrip
+          onHome={navigationProps.onHome}
+          onProfile={navigationProps.onProfile}
+          onSearch={handleSearch}
+          onSettings={handleSettings}
+        />
+
+        {/* Mobile Utility FAB - Mobile Only */}
+        <MobileUtilityFAB
+          onHome={navigationProps.onHome}
+          onProfile={navigationProps.onProfile}
+          onSearch={handleSearch}
+          onSettings={handleSettings}
+        />
+
         <LeaderboardHeader
           timeFilter={timeFilter}
           setTimeFilter={setTimeFilter}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          onProfile={onProfile}
-          onHome={onHome}
         />
 
         <HeroFilterBar
@@ -144,8 +190,8 @@ export function LeaderboardPage({ onProfile, onHome }: LeaderboardPageProps = {}
 
         <TopThreePodium topThree={topThree} />
 
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-12 gap-6 pb-12">
-          <div className="col-span-8">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
+          <div className="lg:col-span-8">
             <LeaderboardTable
               users={leaderboardUsers}
               currentPage={currentPage}
@@ -154,7 +200,7 @@ export function LeaderboardPage({ onProfile, onHome }: LeaderboardPageProps = {}
             />
           </div>
 
-          <div className="col-span-4">
+          <div className="lg:col-span-4">
             <SidebarPanel />
           </div>
         </div>

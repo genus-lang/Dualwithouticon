@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CommunityHeader } from './community/CommunityHeader';
+import { Navbar } from './Navbar';
 import { SearchHeroSection } from './community/SearchHeroSection';
 import { PostCard } from './community/PostCard';
 import { VotePanel } from './community/VotePanel';
@@ -16,8 +16,25 @@ import { X, Sparkles } from 'lucide-react';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 
+interface NavigationProps {
+  onStartCoding: () => void;
+  onStartMatch: () => void;
+  onQuestionBank: () => void;
+  onProfile: () => void;
+  onAnnouncements: () => void;
+  onCommunity: () => void;
+  onLeaderboard: () => void;
+  onContests: () => void;
+  onBlog: () => void;
+  onPrivacy: () => void;
+  onTerms: () => void;
+  onDocs: () => void;
+  onSupport: () => void;
+  onHome: () => void;
+}
+
 interface CommunityPageProps {
-  onExit: () => void;
+  navigationProps: NavigationProps;
 }
 
 interface Post {
@@ -37,7 +54,7 @@ interface Post {
   difficulty: 'Easy' | 'Medium' | 'Hard';
 }
 
-export function CommunityPage({ onExit }: CommunityPageProps) {
+export function CommunityPage({ navigationProps }: CommunityPageProps) {
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
   const [aiAssistEnabled, setAiAssistEnabled] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -267,10 +284,21 @@ export function CommunityPage({ onExit }: CommunityPageProps) {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
-        <CommunityHeader 
-          onExit={onExit} 
-          onAskQuestion={handleAskQuestion}
-          hasNotifications={true}
+        <Navbar 
+          onStartCoding={navigationProps.onStartCoding}
+          onStartMatch={navigationProps.onStartMatch}
+          onQuestionBank={navigationProps.onQuestionBank}
+          onProfile={navigationProps.onProfile}
+          onAnnouncements={navigationProps.onAnnouncements}
+          onCommunity={navigationProps.onCommunity}
+          onLeaderboard={navigationProps.onLeaderboard}
+          onContests={navigationProps.onContests}
+          onBlog={navigationProps.onBlog}
+          onPrivacy={navigationProps.onPrivacy}
+          onTerms={navigationProps.onTerms}
+          onDocs={navigationProps.onDocs}
+          onSupport={navigationProps.onSupport}
+          onHome={navigationProps.onHome}
         />
         
         <SearchHeroSection onAskQuestion={handleAskQuestion} />

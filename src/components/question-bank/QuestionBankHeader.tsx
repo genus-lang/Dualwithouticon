@@ -41,13 +41,13 @@ export function QuestionBankHeader({ onBack }: QuestionBankHeaderProps) {
 
         <div className="flex items-center gap-2">
           <span 
-            className="text-xl text-white"
+            className="text-[#00FFFF] drop-shadow-[0_0_10px_rgba(0,255,255,0.5)]"
             style={{ 
               fontFamily: 'Orbitron, sans-serif',
               fontWeight: 700,
             }}
           >
-            Question Bank 💾
+            Problem Set 💾
           </span>
           <motion.div
             className="h-0.5 w-12 bg-gradient-to-r from-[#00FFFF] to-transparent"
