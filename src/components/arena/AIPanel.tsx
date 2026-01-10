@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'motion/react';
 import { Bot, Lightbulb, AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
@@ -68,11 +67,9 @@ export function AIPanel() {
         ) : (
           <div className="space-y-4">
             {/* Active Hint Banner */}
-            <motion.div
+            <div
               className="glassmorphism rounded-lg p-3 border border-[#FF00FF]/50"
               style={{ boxShadow: '0 0 20px rgba(255, 0, 255, 0.2)' }}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
             >
               <div className="flex items-start gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-[#FF00FF] flex-shrink-0 mt-0.5" />
@@ -86,24 +83,16 @@ export function AIPanel() {
                 </div>
               </div>
               <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-[#00FFFF] via-[#FF00FF] to-[#00FF88]"
-                  animate={{ x: ['-100%', '100%'] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                />
+                <div className="h-full w-2/3 bg-gradient-to-r from-[#00FFFF] via-[#FF00FF] to-[#00FF88]" />
               </div>
-            </motion.div>
+            </div>
 
             {/* Hints List */}
             {hints.map((hint, index) => (
-              <motion.div
+              <div
                 key={index}
                 className="glassmorphism rounded-lg p-4 border hover:border-opacity-50 transition-all group cursor-pointer"
                 style={{ borderColor: `${hint.color}30` }}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.02 }}
               >
                 <div className="flex items-start gap-3 mb-3">
                   <div 
@@ -154,7 +143,7 @@ export function AIPanel() {
                     → Line {hint.line}
                   </div>
                 )}
-              </motion.div>
+              </div>
             ))}
 
             {/* Stats */}

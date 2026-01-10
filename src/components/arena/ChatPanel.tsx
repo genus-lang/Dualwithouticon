@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'motion/react';
 import { MessageSquare, Send } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -73,12 +72,7 @@ export function ChatPanel() {
           <div className="w-8 h-8 rounded-lg bg-[#00FFFF]/20 flex items-center justify-center relative">
             <MessageSquare className="w-5 h-5 text-[#00FFFF]" />
             {hasNewMessage && (
-              <motion.div
-                className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#00FF88]"
-                initial={{ scale: 0 }}
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 0.3 }}
-              />
+              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#00FF88]" />
             )}
           </div>
           <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
@@ -86,19 +80,16 @@ export function ChatPanel() {
           </span>
         </div>
 
-        <div className="w-2 h-2 rounded-full bg-[#00FF88] animate-pulse" />
+        <div className="w-2 h-2 rounded-full bg-[#00FF88]" />
       </div>
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-3">
-          {messages.map((message, index) => (
-            <motion.div
+          {messages.map((message) => (
+            <div
               key={message.id}
               className="space-y-1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
             >
               <div className="flex items-baseline gap-2">
                 <span 
@@ -124,16 +115,11 @@ export function ChatPanel() {
               >
                 {message.text}
               </div>
-            </motion.div>
+            </div>
           ))}
 
           {/* Typing Indicator */}
-          <motion.div
-            className="flex items-center gap-2 text-xs text-white/40"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
+          <div className="flex items-center gap-2 text-xs text-white/40">
             <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>
               &lt;SarahCode&gt; is typing
             </span>
@@ -142,7 +128,7 @@ export function ChatPanel() {
               <div className="w-1 h-1 rounded-full bg-[#FF00FF]" />
               <div className="w-1 h-1 rounded-full bg-[#FF00FF]" />
             </div>
-          </motion.div>
+          </div>
         </div>
       </ScrollArea>
 

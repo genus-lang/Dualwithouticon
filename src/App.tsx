@@ -20,6 +20,8 @@ import { PrivacyPage } from './components/PrivacyPage';
 import { TermsPage } from './components/TermsPage';
 import { DocumentationPage } from './components/DocumentationPage';
 import { SupportPage } from './components/SupportPage';
+import { LoginPage } from './components/LoginPage';
+import { AdminDashboard } from './components/admin/AdminDashboard';
 import { Navbar } from './components/Navbar';
 import './styles/globals.css';
 
@@ -37,15 +39,40 @@ type PageType =
   | 'privacy'
   | 'terms'
   | 'docs'
-  | 'support';
+  | 'support'
+  | 'login'
+  | 'admin';
+
+type UserType = 'guest' | 'user' | 'admin';
+type AdminRole = 'owner' | 'dual_admin' | 'question_admin';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<PageType>('home');
+  const [currentPage, setCurrentPage] = useState<PageType>('login');
+  const [userType, setUserType] = useState<UserType>('guest');
+  const [adminRole, setAdminRole] = useState<AdminRole | undefined>();
 
   useEffect(() => {
     // Set dark mode
     document.documentElement.classList.add('dark');
   }, []);
+
+  // Handle login
+  const handleLogin = (type: 'user' | 'admin', role?: AdminRole) => {
+    setUserType(type);
+    if (type === 'admin' && role) {
+      setAdminRole(role);
+      setCurrentPage('admin');
+    } else {
+      setCurrentPage('home');
+    }
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    setUserType('guest');
+    setAdminRole(undefined);
+    setCurrentPage('login');
+  };
 
   // Navigation handlers
   const navigateToArena = () => setCurrentPage('arena');
@@ -61,7 +88,7 @@ export default function App() {
   const navigateToTerms = () => setCurrentPage('terms');
   const navigateToDocs = () => setCurrentPage('docs');
   const navigateToSupport = () => setCurrentPage('support');
-  const navigateToHome = () => setCurrentPage('home');
+  const navigateToHome = () => setCurrentPage(userType === 'admin' ? 'admin' : 'home');
 
   const handlePageNavigation = (page: PageType) => {
     setCurrentPage(page);
@@ -84,6 +111,16 @@ export default function App() {
     onSupport: navigateToSupport,
     onHome: navigateToHome,
   };
+
+  // Login page
+  if (currentPage === 'login') {
+    return <LoginPage onLogin={handleLogin} onNavigateHome={navigateToHome} />;
+  }
+
+  // Admin dashboard
+  if (currentPage === 'admin' && userType === 'admin' && adminRole) {
+    return <AdminDashboard adminRole={adminRole} onLogout={handleLogout} />;
+  }
 
   // Full-page routes
   if (currentPage === 'arena') {

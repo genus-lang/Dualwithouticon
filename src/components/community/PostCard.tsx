@@ -1,4 +1,3 @@
-import { motion } from 'motion/react';
 import { MessageSquare, Share2, Bookmark } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -32,12 +31,8 @@ export function PostCard({
   onClick,
 }: PostCardProps) {
   return (
-    <motion.div
-      className="glassmorphic border border-[#00FFFF]/10 rounded-xl p-5 hover:border-[#00FFFF]/30 transition-all cursor-pointer group"
-      whileHover={{ 
-        y: -4,
-        boxShadow: '0 0 30px rgba(0, 255, 255, 0.15)',
-      }}
+    <div
+      className="glassmorphic border border-[#00FFFF]/10 rounded-xl p-5 hover:border-[#00FFFF]/30 hover:shadow-[0_0_30px_rgba(0,255,255,0.15)] transition-all cursor-pointer group"
       onClick={onClick}
     >
       <div className="flex gap-4">
@@ -110,36 +105,30 @@ export function PostCard({
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
-              <motion.button
+              <button
                 className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-[#00FFFF] transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <MessageSquare className="w-4 h-4" />
-              </motion.button>
+              </button>
 
-              <motion.button
+              <button
                 className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-[#A259FF] transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <Share2 className="w-4 h-4" />
-              </motion.button>
+              </button>
 
-              <motion.button
+              <button
                 className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-[#00FF88] transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <Bookmark className="w-4 h-4" />
-              </motion.button>
+              </button>
             </div>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

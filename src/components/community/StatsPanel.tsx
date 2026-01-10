@@ -1,4 +1,3 @@
-import { motion } from 'motion/react';
 import { Activity, MessageCircle, Users } from 'lucide-react';
 
 export function StatsPanel() {
@@ -23,13 +22,10 @@ export function StatsPanel() {
 
       {/* Stats List */}
       <div className="flex flex-col gap-3">
-        {stats.map((stat, index) => (
-          <motion.div
+        {stats.map((stat) => (
+          <div
             key={stat.label}
             className="flex items-center gap-3 p-2.5 rounded-lg bg-black/20"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
           >
             <div 
               className="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -55,7 +51,7 @@ export function StatsPanel() {
                 {stat.value}
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

@@ -1,4 +1,3 @@
-import { motion } from 'motion/react';
 import { Badge } from '../ui/badge';
 
 interface Tag {
@@ -37,47 +36,39 @@ export function SidebarTagPanel() {
 
       {/* Tags List */}
       <div className="flex flex-col gap-2">
-        {popularTags.map((tag, index) => (
-          <motion.div
+        {popularTags.map((tag) => (
+          <button
             key={tag.name}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
+            className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-white/5 transition-colors group"
           >
-            <motion.button
-              className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-white/5 transition-colors group"
-              whileHover={{ x: 4 }}
+            <Badge
+              variant="outline"
+              className="border-[#00FFFF]/30 bg-[#00FFFF]/5 group-hover:bg-[#00FFFF]/10 transition-colors"
+              style={{ 
+                fontFamily: 'JetBrains Mono, monospace',
+                borderColor: `${tag.color}30`,
+                color: tag.color,
+              }}
             >
-              <Badge
-                variant="outline"
-                className="border-[#00FFFF]/30 bg-[#00FFFF]/5 group-hover:bg-[#00FFFF]/10 transition-colors"
-                style={{ 
-                  fontFamily: 'JetBrains Mono, monospace',
-                  borderColor: `${tag.color}30`,
-                  color: tag.color,
-                }}
-              >
-                #{tag.name}
-              </Badge>
-              <span 
-                className="text-white/40 text-sm"
-                style={{ fontFamily: 'JetBrains Mono, monospace' }}
-              >
-                {tag.count}
-              </span>
-            </motion.button>
-          </motion.div>
+              #{tag.name}
+            </Badge>
+            <span 
+              className="text-white/40 text-sm"
+              style={{ fontFamily: 'JetBrains Mono, monospace' }}
+            >
+              {tag.count}
+            </span>
+          </button>
         ))}
       </div>
 
       {/* View All Link */}
-      <motion.button
+      <button
         className="w-full mt-3 pt-3 border-t border-white/10 text-[#00FFFF] text-sm hover:underline"
         style={{ fontFamily: 'JetBrains Mono, monospace' }}
-        whileHover={{ x: 4 }}
       >
         View all tags →
-      </motion.button>
+      </button>
     </div>
   );
 }

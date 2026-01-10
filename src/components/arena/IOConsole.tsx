@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'motion/react';
 import { Play, RotateCcw, Terminal } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -95,12 +94,7 @@ Space complexity: O(1)`;
             >
               {isRunning ? (
                 <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                  </motion.div>
+                  <RotateCcw className="w-4 h-4 mr-2" />
                   Running...
                 </>
               ) : (
@@ -127,30 +121,16 @@ Space complexity: O(1)`;
           <TabsContent value="output" className="h-full m-0 p-4 overflow-auto relative">
             {isRunning ? (
               <div className="flex flex-col items-center justify-center h-full">
-                <motion.div
-                  className="text-[#00FFFF] mb-4"
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  <Terminal className="w-12 h-12" />
-                </motion.div>
+                <Terminal className="w-12 h-12 text-[#00FFFF] mb-4" />
                 <div className="text-sm text-white/60" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                   Executing code...
                 </div>
                 <div className="mt-4 w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-[#00FFFF] to-[#00FF88]"
-                    animate={{ x: ['-100%', '100%'] }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  />
+                  <div className="h-full w-1/2 bg-gradient-to-r from-[#00FFFF] to-[#00FF88]" />
                 </div>
               </div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-              >
+              <div>
                 <pre 
                   className="text-sm text-[#00FF88]"
                   style={{ fontFamily: 'JetBrains Mono, monospace' }}
@@ -158,40 +138,12 @@ Space complexity: O(1)`;
                   {outputData}
                 </pre>
 
-                <motion.div
-                  className="mt-4 inline-flex items-center gap-2 glassmorphism px-3 py-2 rounded-lg border border-[#00FF88]/30"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <div className="w-2 h-2 rounded-full bg-[#00FF88] animate-pulse" />
+                <div className="mt-4 inline-flex items-center gap-2 glassmorphism px-3 py-2 rounded-lg border border-[#00FF88]/30">
+                  <div className="w-2 h-2 rounded-full bg-[#00FF88]" />
                   <span className="text-xs text-[#00FF88]" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                     Success
                   </span>
-                </motion.div>
-              </motion.div>
-            )}
-
-            {/* Running Animation Overlay */}
-            {isRunning && (
-              <div className="absolute inset-0 pointer-events-none">
-                {[...Array(5)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute left-0 w-full h-px bg-gradient-to-r from-transparent via-[#00FFFF] to-transparent"
-                    style={{ top: `${20 * i}%` }}
-                    animate={{ 
-                      x: ['-100%', '100%'],
-                      opacity: [0, 1, 0],
-                    }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      delay: i * 0.2,
-                      ease: 'linear',
-                    }}
-                  />
-                ))}
+                </div>
               </div>
             )}
           </TabsContent>
@@ -199,27 +151,25 @@ Space complexity: O(1)`;
           <TabsContent value="logs" className="h-full m-0 p-4 overflow-auto">
             <div className="space-y-2">
               {logs.map((log, index) => (
-                <motion.div
+                <div
                   key={index}
                   className="flex items-start gap-3 text-xs"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
                   style={{ fontFamily: 'JetBrains Mono, monospace' }}
                 >
-                  <span className="text-white/40 flex-shrink-0">{log.timestamp}</span>
-                  <span 
-                    className="flex-shrink-0"
-                    style={{
-                      color: log.level === 'success' ? '#00FF88' : 
-                             log.level === 'error' ? '#FF0088' : 
-                             '#00FFFF'
-                    }}
-                  >
-                    [{log.level.toUpperCase()}]
+                  <span className="text-white/40 flex-shrink-0 w-20">
+                    {log.timestamp}
+                  </span>
+                  <span className={`flex-shrink-0 px-2 py-0.5 rounded text-xs ${
+                    log.level === 'success' 
+                      ? 'bg-[#00FF88]/20 text-[#00FF88]'
+                      : log.level === 'error'
+                      ? 'bg-[#FF0088]/20 text-[#FF0088]'
+                      : 'bg-[#00FFFF]/20 text-[#00FFFF]'
+                  }`}>
+                    {log.level.toUpperCase()}
                   </span>
                   <span className="text-white/80">{log.message}</span>
-                </motion.div>
+                </div>
               ))}
             </div>
           </TabsContent>

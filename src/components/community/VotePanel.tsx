@@ -1,4 +1,3 @@
-import { motion } from 'motion/react';
 import { ChevronUp, ChevronDown, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 
@@ -40,46 +39,38 @@ export function VotePanel({ initialVotes, commentCount }: VotePanelProps) {
   return (
     <div className="flex flex-col items-center gap-2">
       {/* Upvote */}
-      <motion.button
+      <button
         onClick={handleUpvote}
         className={`p-1 rounded transition-colors ${
           userVote === 'up' 
             ? 'text-[#00FF88] bg-[#00FF88]/10' 
             : 'text-white/60 hover:text-[#00FF88] hover:bg-[#00FF88]/5'
         }`}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
       >
         <ChevronUp className="w-6 h-6" />
-      </motion.button>
+      </button>
 
       {/* Vote Count */}
-      <motion.div
+      <div
         className={`text-center min-w-[3rem] px-2 py-1 rounded-lg ${
           votes > 0 ? 'text-[#00FF88]' : votes < 0 ? 'text-[#FF0088]' : 'text-white/60'
         }`}
         style={{ fontFamily: 'JetBrains Mono, monospace' }}
-        animate={{
-          scale: userVote ? [1, 1.2, 1] : 1,
-        }}
-        transition={{ duration: 0.3 }}
       >
         {votes > 0 ? '+' : ''}{votes}
-      </motion.div>
+      </div>
 
       {/* Downvote */}
-      <motion.button
+      <button
         onClick={handleDownvote}
         className={`p-1 rounded transition-colors ${
           userVote === 'down' 
             ? 'text-[#FF0088] bg-[#FF0088]/10' 
             : 'text-white/60 hover:text-[#FF0088] hover:bg-[#FF0088]/5'
         }`}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
       >
         <ChevronDown className="w-6 h-6" />
-      </motion.button>
+      </button>
 
       {/* Comment Count */}
       <div className="mt-4 flex flex-col items-center gap-1">

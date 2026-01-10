@@ -59,7 +59,7 @@ export function ArenaHeader({ onExit }: ArenaHeaderProps) {
           <Button
             size="sm"
             onClick={addTime}
-            className="bg-[#00FF88] text-black hover:bg-[#00FF88]/90 animate-pulse"
+            className="bg-[#00FF88] text-black hover:bg-[#00FF88]/90"
             style={{ fontFamily: 'JetBrains Mono, monospace' }}
           >
             <Plus className="w-4 h-4 mr-1" />
