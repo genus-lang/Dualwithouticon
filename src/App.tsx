@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { HeroSection } from './components/HeroSection';
-import { HowItWorksSection } from './components/HowItWorksSection';
-import { ActivitySection } from './components/ActivitySection';
-import { AIAssistantSection } from './components/AIAssistantSection';
-import { CommunitySection } from './components/CommunitySection';
-import { CTABanner } from './components/CTABanner';
-import { Footer } from './components/Footer';
-import { FloatingActionButton } from './components/FloatingActionButton';
+import { useState, useEffect } from 'react';
+import { CreateRoomPage } from './components/CreateRoomPage';
+import { JoinRoomPage } from './components/JoinRoomPage';
+import { WaitingRoomPage } from './components/WaitingRoomPage';
+import { ContestResultPage } from './components/ContestResultPage';
+import { EditProfilePage } from './components/EditProfilePage';
+import { Navbar } from './components/Navbar';
+import { LoginPage } from './components/LoginPage';
+import { AdminDashboard } from './components/AdminDashboard';
 import { ArenaPage } from './components/ArenaPage';
 import { MatchPage } from './components/MatchPage';
 import { ProblemSetPage } from './components/ProblemSetPage';
@@ -20,9 +20,14 @@ import { PrivacyPage } from './components/PrivacyPage';
 import { TermsPage } from './components/TermsPage';
 import { DocumentationPage } from './components/DocumentationPage';
 import { SupportPage } from './components/SupportPage';
-import { LoginPage } from './components/LoginPage';
-import { AdminDashboard } from './components/admin/AdminDashboard';
-import { Navbar } from './components/Navbar';
+import { HeroSection } from './components/HeroSection';
+import { HowItWorksSection } from './components/HowItWorksSection';
+import { ActivitySection } from './components/ActivitySection';
+import { AIAssistantSection } from './components/AIAssistantSection';
+import { CommunitySection } from './components/CommunitySection';
+import { CTABanner } from './components/CTABanner';
+import { Footer } from './components/Footer';
+import { FloatingActionButton } from './components/FloatingActionButton';
 import './styles/globals.css';
 
 type PageType = 
@@ -31,17 +36,22 @@ type PageType =
   | 'match' 
   | 'questions' 
   | 'profile' 
+  | 'editprofile'
   | 'announcements' 
   | 'community' 
   | 'leaderboard'
   | 'contests'
+  | 'contestresult'
   | 'blog'
   | 'privacy'
   | 'terms'
   | 'docs'
   | 'support'
   | 'login'
-  | 'admin';
+  | 'admin'
+  | 'createroom'
+  | 'joinroom'
+  | 'waitingroom';
 
 type UserType = 'guest' | 'user' | 'admin';
 type AdminRole = 'owner' | 'dual_admin' | 'question_admin';
@@ -79,16 +89,21 @@ export default function App() {
   const navigateToMatch = () => setCurrentPage('match');
   const navigateToQuestions = () => setCurrentPage('questions');
   const navigateToProfile = () => setCurrentPage('profile');
+  const navigateToEditProfile = () => setCurrentPage('editprofile');
   const navigateToAnnouncements = () => setCurrentPage('announcements');
   const navigateToCommunity = () => setCurrentPage('community');
   const navigateToLeaderboard = () => setCurrentPage('leaderboard');
   const navigateToContests = () => setCurrentPage('contests');
+  const navigateToContestResult = () => setCurrentPage('contestresult');
   const navigateToBlog = () => setCurrentPage('blog');
   const navigateToPrivacy = () => setCurrentPage('privacy');
   const navigateToTerms = () => setCurrentPage('terms');
   const navigateToDocs = () => setCurrentPage('docs');
   const navigateToSupport = () => setCurrentPage('support');
   const navigateToHome = () => setCurrentPage(userType === 'admin' ? 'admin' : 'home');
+  const navigateToCreateRoom = () => setCurrentPage('createroom');
+  const navigateToJoinRoom = () => setCurrentPage('joinroom');
+  const navigateToWaitingRoom = () => setCurrentPage('waitingroom');
 
   const handlePageNavigation = (page: PageType) => {
     setCurrentPage(page);
@@ -100,16 +115,21 @@ export default function App() {
     onStartMatch: navigateToMatch,
     onQuestionBank: navigateToQuestions,
     onProfile: navigateToProfile,
+    onEditProfile: navigateToEditProfile,
     onAnnouncements: navigateToAnnouncements,
     onCommunity: navigateToCommunity,
     onLeaderboard: navigateToLeaderboard,
     onContests: navigateToContests,
+    onContestResult: navigateToContestResult,
     onBlog: navigateToBlog,
     onPrivacy: navigateToPrivacy,
     onTerms: navigateToTerms,
     onDocs: navigateToDocs,
     onSupport: navigateToSupport,
     onHome: navigateToHome,
+    onCreateRoom: navigateToCreateRoom,
+    onJoinRoom: navigateToJoinRoom,
+    onWaitingRoom: navigateToWaitingRoom,
   };
 
   // Login page
@@ -139,6 +159,10 @@ export default function App() {
     return <ProfilePage navigationProps={navigationProps} />;
   }
 
+  if (currentPage === 'editprofile') {
+    return <EditProfilePage navigationProps={navigationProps} />;
+  }
+
   if (currentPage === 'announcements') {
     return <AnnouncementPage navigationProps={navigationProps} />;
   }
@@ -153,6 +177,10 @@ export default function App() {
 
   if (currentPage === 'contests') {
     return <ContestPage navigationProps={navigationProps} />;
+  }
+
+  if (currentPage === 'contestresult') {
+    return <ContestResultPage navigationProps={navigationProps} />;
   }
 
   if (currentPage === 'blog') {
@@ -173,6 +201,18 @@ export default function App() {
 
   if (currentPage === 'support') {
     return <SupportPage navigationProps={navigationProps} />;
+  }
+
+  if (currentPage === 'createroom') {
+    return <CreateRoomPage navigationProps={navigationProps} onRoomCreated={navigateToWaitingRoom} />;
+  }
+
+  if (currentPage === 'joinroom') {
+    return <JoinRoomPage navigationProps={navigationProps} onJoinRoom={navigateToWaitingRoom} />;
+  }
+
+  if (currentPage === 'waitingroom') {
+    return <WaitingRoomPage navigationProps={navigationProps} roomId="A9X3QZ" isAdmin={true} onMatchStart={navigateToMatch} />;
   }
 
   // Home page

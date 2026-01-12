@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Code2, Menu, X, ChevronDown } from 'lucide-react';
+import { Code2, Menu, X, ChevronDown, Plus, Key } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -31,6 +31,8 @@ interface NavbarProps {
   onDocs?: () => void;
   onSupport?: () => void;
   onHome?: () => void;
+  onCreateRoom?: () => void;
+  onJoinRoom?: () => void;
 }
 
 export function Navbar({ 
@@ -48,6 +50,8 @@ export function Navbar({
   onDocs,
   onSupport,
   onHome,
+  onCreateRoom,
+  onJoinRoom,
 }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -177,7 +181,47 @@ export function Navbar({
           </div>
 
           {/* Desktop - Avatar Only */}
-          <div className="hidden md:flex items-center">
+          <div className="hidden md:flex items-center gap-3">
+            {/* Join Room Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onJoinRoom}
+                    variant="outline"
+                    className="border-[#9333EA]/40 text-[#9333EA] hover:bg-[#9333EA]/10 hover:border-[#9333EA]"
+                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                  >
+                    <Key className="w-4 h-4 mr-2" />
+                    Join Room
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-[#1A1A1A]/95 backdrop-blur-xl border-[#00FFFF]/30">
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace' }}>Join an existing room</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Create Room Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onCreateRoom}
+                    variant="outline"
+                    className="border-[#00FFFF]/40 text-[#00FFFF] hover:bg-[#00FFFF]/10 hover:border-[#00FFFF]"
+                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Room
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-[#1A1A1A]/95 backdrop-blur-xl border-[#00FFFF]/30">
+                  <p style={{ fontFamily: 'JetBrains Mono, monospace' }}>Create a custom match room</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none">
@@ -225,6 +269,28 @@ export function Navbar({
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-3 border-t border-[#00FFFF]/20">
+            {/* Room Action Buttons - Mobile */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={onJoinRoom}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-[#9333EA]/10 border border-[#9333EA]/40 text-[#9333EA] rounded-lg hover:bg-[#9333EA]/20 transition-colors"
+                style={{ fontFamily: 'JetBrains Mono, monospace' }}
+              >
+                <Key className="w-4 h-4" />
+                Join Room
+              </button>
+              <button
+                onClick={onCreateRoom}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-[#00FFFF]/10 border border-[#00FFFF]/40 text-[#00FFFF] rounded-lg hover:bg-[#00FFFF]/20 transition-colors"
+                style={{ fontFamily: 'JetBrains Mono, monospace' }}
+              >
+                <Plus className="w-4 h-4" />
+                Create Room
+              </button>
+            </div>
+
+            <div className="h-px bg-white/10 my-2" />
+
             <button 
               onClick={onContests}
               className="block w-full text-left text-white/80 hover:text-[#00FFFF] transition-colors px-2 py-2"
