@@ -1,865 +1,678 @@
-import { useState } from 'react';
-import { Navbar } from './Navbar';
+import { useState, useEffect, useRef } from 'react';
 import { 
-  Trophy, ChevronRight, Medal, Award, Clock, TrendingUp, TrendingDown,
-  CheckCircle, XCircle, Target, Flame, Brain, AlertTriangle, Search,
-  Download, RotateCcw, Ban, FileText, ExternalLink, ChevronLeft, ChevronDown
+  ArrowLeft, 
+  ChevronRight, 
+  ChevronDown, 
+  Search, 
+  Filter, 
+  X, 
+  Check, 
+  AlertCircle,
+  Clock,
+  MoreVertical,
+  Code2,
+  ListFilter
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Separator } from './ui/separator';
-import { Alert, AlertDescription } from './ui/alert';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface NavigationProps {
-  onStartCoding?: () => void;
-  onStartMatch?: () => void;
-  onQuestionBank?: () => void;
-  onProfile?: () => void;
-  onEditProfile?: () => void;
-  onContestResult?: () => void;
-  onAnnouncements?: () => void;
-  onCommunity?: () => void;
-  onLeaderboard?: () => void;
-  onContests?: () => void;
-  onBlog?: () => void;
-  onPrivacy?: () => void;
-  onTerms?: () => void;
-  onDocs?: () => void;
-  onSupport?: () => void;
-  onHome?: () => void;
+  onStartCoding: () => void;
+  onStartMatch: () => void;
+  onQuestionBank: () => void;
+  onProfile: () => void;
+  onAnnouncements: () => void;
+  onCommunity: () => void;
+  onLeaderboard: () => void;
+  onContests: () => void;
+  onContestResult: () => void;
+  onBlog: () => void;
+  onPrivacy: () => void;
+  onTerms: () => void;
+  onDocs: () => void;
+  onSupport: () => void;
+  onHome: () => void;
 }
 
 interface ContestResultPageProps {
   navigationProps: NavigationProps;
-  contestId?: string;
-  isParticipant?: boolean;
-  isAdmin?: boolean;
 }
 
-interface Participant {
-  rank: number;
-  username: string;
-  score: number;
-  solved: string;
-  penalty: string;
-  ratingChange: number;
-}
+type Verdict = 'AC' | 'WA' | 'TLE' | 'RTE' | 'CE' | 'SKIPPED';
 
 interface ProblemResult {
-  id: string;
-  name: string;
-  status: 'solved' | 'unsolved' | 'attempted';
+  status: Verdict;
+  time?: string; // HH:MM of solve
   attempts: number;
-  time: string;
+  penalty?: number;
 }
 
-export function ContestResultPage({ 
-  navigationProps, 
-  contestId = 'weekly-clash-12',
-  isParticipant = true,
-  isAdmin = false 
-}: ContestResultPageProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('rank');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+interface LeaderboardEntry {
+  rank: number;
+  username: string;
+  handle?: string;
+  country?: string; // Flag emoji
+  score: number;
+  penalty: number; // In minutes usually
+  problems: Record<string, ProblemResult>; // 'A', 'B', 'C', 'D'
+  lastSubmission: string;
+}
 
-  // Contest Data
-  const contestData = {
-    name: 'CodeArena Weekly Clash #12',
-    type: 'Rated | Solo',
-    date: '12 Sep 2025',
-    duration: '2 Hours',
-    totalParticipants: 1284,
-    difficulty: {
-      easy: 1,
-      medium: 2,
-      hard: 1,
+const PROBLEMS = ['A', 'B', 'C', 'D'];
+
+const MOCK_LEADERBOARD: LeaderboardEntry[] = [
+  {
+    rank: 1,
+    username: 'tourist',
+    handle: 'LGM',
+    country: '🇧🇾',
+    score: 400,
+    penalty: 45,
+    problems: {
+      'A': { status: 'AC', time: '00:05', attempts: 1 },
+      'B': { status: 'AC', time: '00:12', attempts: 1 },
+      'C': { status: 'AC', time: '00:25', attempts: 1 },
+      'D': { status: 'AC', time: '00:45', attempts: 1 },
     },
+    lastSubmission: '00:45'
+  },
+  {
+    rank: 2,
+    username: 'Benq',
+    handle: 'GM',
+    country: '🇺🇸',
+    score: 400,
+    penalty: 58,
+    problems: {
+      'A': { status: 'AC', time: '00:04', attempts: 1 },
+      'B': { status: 'AC', time: '00:15', attempts: 1 },
+      'C': { status: 'AC', time: '00:32', attempts: 2, penalty: 10 },
+      'D': { status: 'AC', time: '00:58', attempts: 1 },
+    },
+    lastSubmission: '00:58'
+  },
+  {
+    rank: 3,
+    username: 'meghram',
+    handle: 'Master',
+    country: '🇮🇳',
+    score: 300,
+    penalty: 120,
+    problems: {
+      'A': { status: 'AC', time: '00:10', attempts: 1 },
+      'B': { status: 'AC', time: '00:45', attempts: 3, penalty: 20 },
+      'C': { status: 'AC', time: '01:30', attempts: 1 },
+      'D': { status: 'TLE', attempts: 5 },
+    },
+    lastSubmission: '01:30'
+  },
+  {
+    rank: 4,
+    username: 'jiangly',
+    handle: 'LGM',
+    country: '🇨🇳',
+    score: 200,
+    penalty: 25,
+    problems: {
+      'A': { status: 'AC', time: '00:08', attempts: 1 },
+      'B': { status: 'AC', time: '00:25', attempts: 1 },
+      'C': { status: 'WA', attempts: 2 },
+      'D': { status: 'SKIPPED', attempts: 0 },
+    },
+    lastSubmission: '00:25'
+  },
+  // Add more rows to demonstrate scrolling
+  ...Array.from({ length: 50 }).map((_, i) => ({
+    rank: i + 5,
+    username: `coder_${i+5}`,
+    handle: 'Expert',
+    country: '🌍',
+    score: Math.max(0, 400 - (i * 5)),
+    penalty: 30 + i * 2,
+    problems: {
+      'A': { status: 'AC', time: `00:${10 + (i % 50)}`, attempts: 1 },
+      'B': i % 3 === 0 ? { status: 'AC', time: `00:${30 + (i % 30)}`, attempts: 2 } : { status: 'WA', attempts: 1 },
+      'C': i % 5 === 0 ? { status: 'AC', time: `01:00`, attempts: 1 } : { status: 'SKIPPED', attempts: 0 },
+      'D': { status: 'SKIPPED', attempts: 0 },
+    },
+    lastSubmission: `00:${30 + (i % 30)}`
+  }))
+];
+
+interface FilterState {
+  problem: 'all' | 'A' | 'B' | 'C' | 'D' | 'all_solved';
+  minScore: string;
+  maxScore: string;
+  minRank: string;
+  maxRank: string;
+  status: {
+    atLeastOne: boolean;
+    solvedAll: boolean;
+    noAC: boolean;
   };
+  search: string;
+}
 
-  // Top 3 Performers
-  const topPerformers = [
-    { rank: 1, username: '@legendCoder', score: 620, penalty: '-30 min', ratingChange: 72 },
-    { rank: 2, username: '@byteWarrior', score: 598, penalty: '-18 min', ratingChange: 51 },
-    { rank: 3, username: '@codePhantom', score: 582, penalty: '-10 min', ratingChange: 43 },
-  ];
+const INITIAL_FILTERS: FilterState = {
+  problem: 'all',
+  minScore: '',
+  maxScore: '',
+  minRank: '',
+  maxRank: '',
+  status: {
+    atLeastOne: false,
+    solvedAll: false,
+    noAC: false,
+  },
+  search: ''
+};
 
-  // Full Rankings Data
-  const allParticipants: Participant[] = [
-    { rank: 1, username: '@legendCoder', score: 620, solved: '4/4', penalty: '-30', ratingChange: 72 },
-    { rank: 2, username: '@byteWarrior', score: 598, solved: '4/4', penalty: '-18', ratingChange: 51 },
-    { rank: 3, username: '@codePhantom', score: 582, solved: '3/4', penalty: '-10', ratingChange: 43 },
-    { rank: 4, username: '@nullPointer', score: 570, solved: '3/4', penalty: '-15', ratingChange: 38 },
-    { rank: 5, username: '@arrayMaster', score: 565, solved: '3/4', penalty: '-12', ratingChange: 35 },
-    { rank: 142, username: '@meghram_meena', score: 410, solved: '3/4', penalty: '-24', ratingChange: 18 },
-    { rank: 143, username: '@coder123', score: 408, solved: '3/4', penalty: '-28', ratingChange: 17 },
-    { rank: 144, username: '@devX', score: 405, solved: '2/4', penalty: '-15', ratingChange: 16 },
-  ];
+export function ContestResultPage({ navigationProps }: ContestResultPageProps) {
+  const [theme] = useState<'dark' | 'light'>('dark');
+  const [selectedUser, setSelectedUser] = useState<LeaderboardEntry | null>(null);
+  const [selectedProblem, setSelectedProblem] = useState<{user: string, problem: string} | null>(null);
+  
+  // Filter State
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState<FilterState>(INITIAL_FILTERS);
+  const filterRef = useRef<HTMLDivElement>(null);
 
-  // Personal Performance (if user participated)
-  const personalPerformance = {
-    rank: 142,
-    score: 410,
-    solved: '3 / 4',
-    ratingChange: 18,
-    timeUsed: '1h 42m',
-  };
-
-  // Problem-wise breakdown
-  const problemResults: ProblemResult[] = [
-    { id: 'A', name: 'Array Sum Problem', status: 'solved', attempts: 1, time: '12m' },
-    { id: 'B', name: 'Binary Tree Traversal', status: 'solved', attempts: 2, time: '28m' },
-    { id: 'C', name: 'Dynamic Programming', status: 'solved', attempts: 1, time: '34m' },
-    { id: 'D', name: 'Graph Algorithms', status: 'unsolved', attempts: 3, time: '—' },
-  ];
-
-  // Profile Impact
-  const profileImpact = {
-    streakStatus: 'Streak Maintained: Day 14',
-    contestCount: 'Contests Participated: +1',
-  };
-
-  // Leaderboard Impact
-  const leaderboardImpact = {
-    weeklyChange: 5,
-    monthlyChange: -2,
-    bestRankAchieved: false,
-  };
-
-  // Admin Logs
-  const adminLogs = [
-    { id: '1', action: 'Result published by Admin @admin01', timestamp: '12 Sep 2025, 6:00 PM' },
-    { id: '2', action: 'Rejudge triggered for Problem C', timestamp: '12 Sep 2025, 5:45 PM' },
-  ];
-
-  const filteredParticipants = allParticipants.filter(p =>
-    p.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const sortedParticipants = [...filteredParticipants].sort((a, b) => {
-    switch (sortBy) {
-      case 'score':
-        return b.score - a.score;
-      case 'rating':
-        return b.ratingChange - a.ratingChange;
-      default:
-        return a.rank - b.rank;
+  // Close filter on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false);
+      }
     }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleApplyFilters = () => {
+    setAppliedFilters(filters);
+    setIsFilterOpen(false);
+  };
+
+  const handleResetFilters = () => {
+    setFilters(INITIAL_FILTERS);
+    setAppliedFilters(INITIAL_FILTERS);
+  };
+
+  const isFilterActive = JSON.stringify(appliedFilters) !== JSON.stringify(INITIAL_FILTERS);
+
+  // Filter Logic
+  const filteredLeaderboard = MOCK_LEADERBOARD.filter(entry => {
+    // Problem Filter
+    if (appliedFilters.problem !== 'all') {
+      if (appliedFilters.problem === 'all_solved') {
+        const allSolved = PROBLEMS.every(p => entry.problems[p].status === 'AC');
+        if (!allSolved) return false;
+      } else {
+        if (entry.problems[appliedFilters.problem].status !== 'AC') return false;
+      }
+    }
+
+    // Score Range
+    if (appliedFilters.minScore && entry.score < parseInt(appliedFilters.minScore)) return false;
+    if (appliedFilters.maxScore && entry.score > parseInt(appliedFilters.maxScore)) return false;
+
+    // Rank Range
+    if (appliedFilters.minRank && entry.rank < parseInt(appliedFilters.minRank)) return false;
+    if (appliedFilters.maxRank && entry.rank > parseInt(appliedFilters.maxRank)) return false;
+
+    // Status Filter
+    const acCount = Object.values(entry.problems).filter(p => p.status === 'AC').length;
+    if (appliedFilters.status.atLeastOne && acCount === 0) return false;
+    if (appliedFilters.status.solvedAll && acCount < 4) return false;
+    if (appliedFilters.status.noAC && acCount > 0) return false;
+
+    // Search
+    if (appliedFilters.search) {
+      const q = appliedFilters.search.toLowerCase();
+      return entry.username.toLowerCase().includes(q) || (entry.handle && entry.handle.toLowerCase().includes(q));
+    }
+
+    return true;
   });
 
-  const totalPages = Math.ceil(sortedParticipants.length / itemsPerPage);
-  const paginatedParticipants = sortedParticipants.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const getRankColor = (rank: number) => {
-    if (rank === 1) return 'border-yellow-500 bg-yellow-500/10';
-    if (rank === 2) return 'border-gray-400 bg-gray-400/10';
-    if (rank === 3) return 'border-amber-600 bg-amber-600/10';
-    return 'border-[#00FFFF]/20 bg-[#1A1A1A]/80';
+  const getStatusColor = (status: Verdict) => {
+    switch (status) {
+      case 'AC': return 'text-green-500 font-bold';
+      case 'WA': return 'text-red-500';
+      case 'TLE': return 'text-orange-500';
+      case 'RTE': return 'text-purple-500';
+      case 'CE': return 'text-yellow-500';
+      default: return 'text-gray-500';
+    }
   };
 
-  const getRankMedal = (rank: number) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
-    return null;
+  const getStatusBg = (status: Verdict) => {
+    switch (status) {
+      case 'AC': return 'bg-green-500/10';
+      case 'WA': return 'bg-red-500/10';
+      default: return 'transparent';
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F1C]">
-      <Navbar {...navigationProps} />
-      
-      <div className="pt-20 px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto pb-12">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 text-sm mb-4" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-            <button 
-              onClick={navigationProps.onHome}
-              className="text-[#00FFFF] hover:underline"
-            >
-              Home
-            </button>
-            <ChevronRight className="w-4 h-4 text-white/40" />
-            <button 
-              onClick={navigationProps.onContests}
-              className="text-[#00FFFF] hover:underline"
-            >
-              Contests
-            </button>
-            <ChevronRight className="w-4 h-4 text-white/40" />
-            <span className="text-white/60">Results</span>
-          </div>
+    <div className={`h-screen flex flex-col ${theme === 'dark' ? 'bg-[#0f0f0f] text-gray-300' : 'bg-white text-gray-800'} font-sans overflow-hidden`}>
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+        td, th { white-space: nowrap; }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+      `}</style>
+
+      {/* 1. TOP HEADER (THIN, STICKY) */}
+      <header className={`h-10 border-b flex items-center justify-between px-4 shrink-0 z-30 relative ${theme === 'dark' ? 'bg-[#121212] border-[#222]' : 'bg-white border-gray-200'}`}>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={navigationProps.onHome}
+            className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back
+          </button>
           
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl text-white flex items-center gap-3" style={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 600 }}>
-              🏁 Contest Results
-            </h1>
-            
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={navigationProps.onContests}
-                className="border-[#00FFFF]/30 text-[#00FFFF] hover:bg-[#00FFFF]/10"
-                style={{ fontFamily: 'JetBrains Mono, monospace' }}
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Back to Contests
-              </Button>
-              <Button
-                variant="outline"
-                onClick={navigationProps.onLeaderboard}
-                className="border-[#00FFFF]/30 text-[#00FFFF] hover:bg-[#00FFFF]/10"
-                style={{ fontFamily: 'JetBrains Mono, monospace' }}
-              >
-                Leaderboard
-              </Button>
-            </div>
-          </div>
+          <div className={`h-4 w-[1px] ${theme === 'dark' ? 'bg-[#333]' : 'bg-gray-300'}`} />
+          
+          <h1 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+            Weekly Clash – A9X3QZ
+          </h1>
+          
+          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${theme === 'dark' ? 'bg-[#222] text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
+            Finished
+          </span>
         </div>
 
-        {/* Contest Summary */}
-        <Card className="bg-[#1A1A1A]/80 border-[#00FFFF]/20 mb-6">
-          <CardHeader>
-            <CardTitle className="text-white text-2xl" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-              {contestData.name}
-            </CardTitle>
-            <CardDescription style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-              {contestData.type}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div>
-                <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  DATE
-                </p>
-                <p className="text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  {contestData.date}
-                </p>
-              </div>
+        <div className="flex items-center gap-3 text-xs" ref={filterRef}>
+          <div className={`px-2 py-0.5 rounded font-medium ${theme === 'dark' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+            Your Rank: 3 / {MOCK_LEADERBOARD.length}
+          </div>
 
-              <div>
-                <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  DURATION
-                </p>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4 text-[#00FFFF]" />
-                  <p className="text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                    {contestData.duration}
-                  </p>
-                </div>
-              </div>
+          <div className={`h-4 w-[1px] ${theme === 'dark' ? 'bg-[#333]' : 'bg-gray-300'}`} />
 
-              <div>
-                <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  PARTICIPANTS
-                </p>
-                <p className="text-white text-xl" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                  {contestData.totalParticipants.toLocaleString()}
-                </p>
-              </div>
-
-              <div className="col-span-2">
-                <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  DIFFICULTY MIX
-                </p>
-                <div className="flex gap-2">
-                  <Badge className="bg-green-500/20 text-green-400">
-                    Easy ×{contestData.difficulty.easy}
-                  </Badge>
-                  <Badge className="bg-yellow-500/20 text-yellow-400">
-                    Medium ×{contestData.difficulty.medium}
-                  </Badge>
-                  <Badge className="bg-red-500/20 text-red-400">
-                    Hard ×{contestData.difficulty.hard}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Performers Podium */}
-        <Card className="bg-[#1A1A1A]/80 border-[#00FFFF]/20 mb-6">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-              <Trophy className="w-5 h-5 text-yellow-500" />
-              Top Performers
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {topPerformers.map((performer) => (
-                <Card 
-                  key={performer.rank}
-                  className={`${getRankColor(performer.rank)} cursor-pointer hover:border-opacity-60 transition-colors`}
-                >
-                  <CardContent className="pt-6">
-                    <div className="text-center mb-4">
-                      <div className="text-5xl mb-2">{getRankMedal(performer.rank)}</div>
-                      <h3 className="text-xl text-white mb-1" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                        Rank {performer.rank}
-                      </h3>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-xs text-white/60" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                          USERNAME
-                        </p>
-                        <p 
-                          className="text-[#00FFFF] hover:underline cursor-pointer" 
-                          style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                          onClick={navigationProps.onProfile}
-                        >
-                          {performer.username}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs text-white/60" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                          SCORE
-                        </p>
-                        <p className="text-white text-2xl" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                          {performer.score}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs text-white/60" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                          TIME PENALTY
-                        </p>
-                        <p className="text-white" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                          {performer.penalty}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs text-white/60" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                          RATING CHANGE
-                        </p>
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="w-4 h-4 text-green-500" />
-                          <p className="text-green-500" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                            +{performer.ratingChange}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Complete Standings */}
-        <Card className="bg-[#1A1A1A]/80 border-[#00FFFF]/20 mb-6">
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <CardTitle className="text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                <Target className="w-5 h-5 text-[#00FFFF]" />
-                Complete Standings
-              </CardTitle>
-              
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
-                  <Input
-                    placeholder="Search username..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-[#0A0F1C] border-[#00FFFF]/30 text-white w-full sm:w-[200px]"
-                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                  />
-                </div>
-
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-full sm:w-[140px] bg-[#0A0F1C] border-[#00FFFF]/30 text-white">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1A1A1A] border-[#00FFFF]/30">
-                    <SelectItem value="rank">Sort by Rank</SelectItem>
-                    <SelectItem value="score">Sort by Score</SelectItem>
-                    <SelectItem value="rating">Sort by Rating Δ</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Rankings Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left text-xs text-white/60 py-3 px-2">RANK</th>
-                    <th className="text-left text-xs text-white/60 py-3 px-2">USER</th>
-                    <th className="text-left text-xs text-white/60 py-3 px-2">SCORE</th>
-                    <th className="text-left text-xs text-white/60 py-3 px-2">SOLVED</th>
-                    <th className="text-left text-xs text-white/60 py-3 px-2">PENALTY</th>
-                    <th className="text-left text-xs text-white/60 py-3 px-2">RATING Δ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedParticipants.map((participant) => (
-                    <tr 
-                      key={participant.rank}
-                      className={`border-b border-white/5 hover:bg-[#00FFFF]/5 transition-colors ${
-                        participant.username === '@meghram_meena' ? 'bg-[#00FFFF]/10' : ''
-                      }`}
-                    >
-                      <td className="py-3 px-2">
-                        <div className="flex items-center gap-2">
-                          {getRankMedal(participant.rank) && (
-                            <span className="text-lg">{getRankMedal(participant.rank)}</span>
-                          )}
-                          <span className={
-                            participant.rank <= 10 ? 'text-yellow-500' :
-                            participant.rank <= 50 ? 'text-green-500' :
-                            'text-white/80'
-                          }>
-                            #{participant.rank}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-2">
-                        <span 
-                          className="text-[#00FFFF] hover:underline cursor-pointer"
-                          onClick={navigationProps.onProfile}
-                        >
-                          {participant.username}
-                        </span>
-                      </td>
-                      <td className="py-3 px-2 text-white">{participant.score}</td>
-                      <td className="py-3 px-2 text-white">{participant.solved}</td>
-                      <td className="py-3 px-2 text-white/60">{participant.penalty}</td>
-                      <td className="py-3 px-2">
-                        <div className="flex items-center gap-1">
-                          {participant.ratingChange > 0 ? (
-                            <>
-                              <TrendingUp className="w-4 h-4 text-green-500" />
-                              <span className="text-green-500">+{participant.ratingChange}</span>
-                            </>
-                          ) : (
-                            <>
-                              <TrendingDown className="w-4 h-4 text-red-500" />
-                              <span className="text-red-500">{participant.ratingChange}</span>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-4">
-                <p className="text-sm text-white/60" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                  Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, sortedParticipants.length)} of {sortedParticipants.length}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                    className="border-[#00FFFF]/30 text-white disabled:opacity-50"
-                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                    className="border-[#00FFFF]/30 text-white disabled:opacity-50"
-                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
+          {/* FILTER BUTTON */}
+          <button
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`w-8 h-8 flex items-center justify-center rounded transition-colors relative ${
+              isFilterOpen || isFilterActive 
+                ? (theme === 'dark' ? 'bg-[#333] text-white' : 'bg-gray-200 text-black')
+                : (theme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-[#222]' : 'text-gray-600 hover:text-black hover:bg-gray-100')
+            }`}
+            title="Filter Leaderboard"
+          >
+            <ListFilter className="w-4 h-4" />
+            {isFilterActive && (
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full border border-[#121212]" />
             )}
-          </CardContent>
-        </Card>
+          </button>
 
-        {/* Scoring & Rating Breakdown */}
-        <Card className="bg-[#1A1A1A]/80 border-[#00FFFF]/20 mb-6">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-              📐 Scoring & Rating Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-            <div>
-              <h4 className="text-white mb-2">Score Calculation:</h4>
-              <p className="text-white/70 text-sm">
-                Score = Base Points - Time Penalty - Wrong Submissions
-              </p>
-            </div>
+          {/* FILTER PANEL DROPDOWN */}
+          <AnimatePresence>
+            {isFilterOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.1 }}
+                className={`absolute top-full right-4 mt-2 w-72 rounded-lg border shadow-xl flex flex-col overflow-hidden z-50 ${theme === 'dark' ? 'bg-[#1a1a1a] border-[#333]' : 'bg-white border-gray-200'}`}
+              >
+                {/* Panel Header */}
+                <div className={`px-4 py-2 border-b text-[10px] font-bold uppercase tracking-wider opacity-50 ${theme === 'dark' ? 'border-[#333] bg-[#222]' : 'border-gray-100 bg-gray-50'}`}>
+                  Filter View
+                </div>
 
-            <Separator className="bg-white/10" />
-
-            <div>
-              <h4 className="text-white mb-2">Points per Problem:</h4>
-              <ul className="text-white/70 text-sm space-y-1">
-                <li>• Easy: 100 base points</li>
-                <li>• Medium: 200 base points</li>
-                <li>• Hard: 300 base points</li>
-              </ul>
-            </div>
-
-            <Separator className="bg-white/10" />
-
-            <div>
-              <h4 className="text-white mb-2">Penalties:</h4>
-              <ul className="text-white/70 text-sm space-y-1">
-                <li>• Time Penalty: -1 point per minute used</li>
-                <li>• Wrong Submission: -10 points per attempt</li>
-              </ul>
-            </div>
-
-            <Separator className="bg-white/10" />
-
-            <div>
-              <h4 className="text-white mb-2">Rating Algorithm:</h4>
-              <p className="text-white/70 text-sm">
-                Rating updated using <span className="text-[#00FFFF]">CodeArena Rated Formula v2</span>
-              </p>
-              <p className="text-white/50 text-xs mt-1">
-                Based on performance relative to expected rank
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Personal Performance Summary */}
-        {isParticipant && (
-          <>
-            <Card className="bg-gradient-to-br from-[#00FFFF]/10 to-[#9333EA]/10 border-[#00FFFF]/30 mb-6">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                  👤 Your Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                  <div>
-                    <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                      FINAL RANK
-                    </p>
-                    <p className="text-3xl text-[#00FFFF]" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                      #{personalPerformance.rank}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                      SCORE
-                    </p>
-                    <p className="text-3xl text-white" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                      {personalPerformance.score}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                      PROBLEMS SOLVED
-                    </p>
-                    <p className="text-3xl text-green-500" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                      {personalPerformance.solved}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                      RATING CHANGE
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <TrendingUp className="w-6 h-6 text-green-500" />
-                      <p className="text-3xl text-green-500" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                        +{personalPerformance.ratingChange}
-                      </p>
+                <div className="p-4 space-y-4">
+                  {/* Search */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold opacity-60">Search User</label>
+                    <div className={`flex items-center px-2 py-1.5 rounded border ${theme === 'dark' ? 'bg-[#121212] border-[#333]' : 'bg-gray-50 border-gray-200'}`}>
+                      <Search className="w-3 h-3 opacity-50 mr-2" />
+                      <input 
+                        type="text" 
+                        value={filters.search}
+                        onChange={(e) => setFilters({...filters, search: e.target.value})}
+                        placeholder="Username or handle" 
+                        className="bg-transparent border-none outline-none text-xs w-full placeholder-opacity-40"
+                      />
                     </div>
                   </div>
 
-                  <div>
-                    <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                      TIME USED
-                    </p>
-                    <p className="text-2xl text-white" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                      {personalPerformance.timeUsed}
-                    </p>
+                  {/* Problem Filter */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold opacity-60">Solved Problem</label>
+                    <div className="grid grid-cols-3 gap-1">
+                      {[
+                        { id: 'all', label: 'All' },
+                        { id: 'all_solved', label: 'All 4' },
+                        ...PROBLEMS.map(p => ({ id: p, label: p }))
+                      ].map((opt) => (
+                        <button
+                          key={opt.id}
+                          onClick={() => setFilters({...filters, problem: opt.id as any})}
+                          className={`px-2 py-1 text-[10px] font-medium rounded border transition-colors ${
+                            filters.problem === opt.id
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : (theme === 'dark' ? 'bg-[#222] border-[#333] text-gray-400 hover:bg-[#333]' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100')
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rank Range */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold opacity-60">Rank Range</label>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="number" 
+                        placeholder="Min" 
+                        value={filters.minRank}
+                        onChange={(e) => setFilters({...filters, minRank: e.target.value})}
+                        className={`w-full px-2 py-1.5 text-xs rounded border outline-none ${theme === 'dark' ? 'bg-[#121212] border-[#333]' : 'bg-gray-50 border-gray-200'}`}
+                      />
+                      <span className="opacity-30 text-xs">-</span>
+                      <input 
+                        type="number" 
+                        placeholder="Max" 
+                        value={filters.maxRank}
+                        onChange={(e) => setFilters({...filters, maxRank: e.target.value})}
+                        className={`w-full px-2 py-1.5 text-xs rounded border outline-none ${theme === 'dark' ? 'bg-[#121212] border-[#333]' : 'bg-gray-50 border-gray-200'}`}
+                      />
+                    </div>
+                  </div>
+
+                   {/* Score Range */}
+                   <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold opacity-60">Score Range</label>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="number" 
+                        placeholder="Min" 
+                        value={filters.minScore}
+                        onChange={(e) => setFilters({...filters, minScore: e.target.value})}
+                        className={`w-full px-2 py-1.5 text-xs rounded border outline-none ${theme === 'dark' ? 'bg-[#121212] border-[#333]' : 'bg-gray-50 border-gray-200'}`}
+                      />
+                      <span className="opacity-30 text-xs">-</span>
+                      <input 
+                        type="number" 
+                        placeholder="Max" 
+                        value={filters.maxScore}
+                        onChange={(e) => setFilters({...filters, maxScore: e.target.value})}
+                        className={`w-full px-2 py-1.5 text-xs rounded border outline-none ${theme === 'dark' ? 'bg-[#121212] border-[#333]' : 'bg-gray-50 border-gray-200'}`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Status Checkboxes */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold opacity-60">Status</label>
+                    <div className="space-y-1">
+                      <label className="flex items-center gap-2 cursor-pointer group">
+                        <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${filters.status.atLeastOne ? 'bg-blue-600 border-blue-600' : (theme === 'dark' ? 'border-[#444] bg-[#222]' : 'border-gray-300 bg-white')}`}>
+                          {filters.status.atLeastOne && <Check className="w-2.5 h-2.5 text-white" />}
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          className="hidden"
+                          checked={filters.status.atLeastOne} 
+                          onChange={(e) => setFilters({...filters, status: {...filters.status, atLeastOne: e.target.checked}})}
+                        />
+                        <span className="text-xs opacity-80 group-hover:opacity-100">Solved ≥ 1 problem</span>
+                      </label>
+                      
+                      <label className="flex items-center gap-2 cursor-pointer group">
+                         <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${filters.status.solvedAll ? 'bg-blue-600 border-blue-600' : (theme === 'dark' ? 'border-[#444] bg-[#222]' : 'border-gray-300 bg-white')}`}>
+                          {filters.status.solvedAll && <Check className="w-2.5 h-2.5 text-white" />}
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          className="hidden"
+                          checked={filters.status.solvedAll} 
+                          onChange={(e) => setFilters({...filters, status: {...filters.status, solvedAll: e.target.checked}})}
+                        />
+                        <span className="text-xs opacity-80 group-hover:opacity-100">Solved all problems</span>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer group">
+                         <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${filters.status.noAC ? 'bg-blue-600 border-blue-600' : (theme === 'dark' ? 'border-[#444] bg-[#222]' : 'border-gray-300 bg-white')}`}>
+                          {filters.status.noAC && <Check className="w-2.5 h-2.5 text-white" />}
+                        </div>
+                        <input 
+                          type="checkbox" 
+                          className="hidden"
+                          checked={filters.status.noAC} 
+                          onChange={(e) => setFilters({...filters, status: {...filters.status, noAC: e.target.checked}})}
+                        />
+                        <span className="text-xs opacity-80 group-hover:opacity-100">No AC submissions</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
-                {/* Problem-wise Breakdown */}
-                <div>
-                  <h4 className="text-white mb-3" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                    Problem-wise Breakdown
-                  </h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                      <thead>
-                        <tr className="border-b border-white/10">
-                          <th className="text-left text-xs text-white/60 py-2 px-2">PROBLEM</th>
-                          <th className="text-left text-xs text-white/60 py-2 px-2">STATUS</th>
-                          <th className="text-left text-xs text-white/60 py-2 px-2">ATTEMPTS</th>
-                          <th className="text-left text-xs text-white/60 py-2 px-2">TIME</th>
-                          <th className="text-left text-xs text-white/60 py-2 px-2">ACTION</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {problemResults.map((problem) => (
-                          <tr key={problem.id} className="border-b border-white/5">
-                            <td className="py-3 px-2">
-                              <div>
-                                <span className="text-white font-medium">{problem.id}</span>
-                                <p className="text-xs text-white/60">{problem.name}</p>
-                              </div>
-                            </td>
-                            <td className="py-3 px-2">
-                              {problem.status === 'solved' ? (
-                                <div className="flex items-center gap-1 text-green-500">
-                                  <CheckCircle className="w-4 h-4" />
-                                  <span>Solved</span>
-                                </div>
-                              ) : problem.status === 'attempted' ? (
-                                <div className="flex items-center gap-1 text-yellow-500">
-                                  <AlertTriangle className="w-4 h-4" />
-                                  <span>Attempted</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1 text-red-500">
-                                  <XCircle className="w-4 h-4" />
-                                  <span>Unsolved</span>
-                                </div>
-                              )}
-                            </td>
-                            <td className="py-3 px-2 text-white">{problem.attempts}</td>
-                            <td className="py-3 px-2 text-white">{problem.time}</td>
-                            <td className="py-3 px-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="border-[#00FFFF]/30 text-[#00FFFF] hover:bg-[#00FFFF]/10"
-                              >
-                                <ExternalLink className="w-3 h-3 mr-1" />
-                                View
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                {/* Footer Buttons */}
+                <div className={`p-3 border-t flex gap-2 ${theme === 'dark' ? 'border-[#333] bg-[#222]' : 'border-gray-100 bg-gray-50'}`}>
+                  <button 
+                    onClick={handleResetFilters}
+                    className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${theme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-[#333]' : 'text-gray-600 hover:text-black hover:bg-gray-200'}`}
+                  >
+                    Reset
+                  </button>
+                  <button 
+                    onClick={handleApplyFilters}
+                    className="flex-1 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded transition-colors"
+                  >
+                    Apply
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </header>
 
-            {/* Profile Impact */}
-            <Card className="bg-[#1A1A1A]/80 border-[#00FFFF]/20 mb-6">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                  <Flame className="w-5 h-5 text-orange-500" />
-                  Profile Impact
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-white">{profileImpact.streakStatus}</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-yellow-500" />
-                  <span className="text-white">{profileImpact.contestCount}</span>
-                </div>
-
-                <Alert className="bg-[#00FFFF]/5 border-[#00FFFF]/30 mt-3">
-                  <AlertDescription className="text-white/80" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                    This contest has been added to your profile history and AI insights dataset.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
-
-            {/* Leaderboard Impact */}
-            <Card className="bg-[#1A1A1A]/80 border-[#00FFFF]/20 mb-6">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                  <Trophy className="w-5 h-5 text-yellow-500" />
-                  Leaderboard Impact
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                        WEEKLY RANK CHANGE
-                      </p>
-                      <div className="flex items-center gap-1">
-                        <TrendingUp className="w-5 h-5 text-green-500" />
-                        <p className="text-2xl text-green-500" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                          +{leaderboardImpact.weeklyChange}
-                        </p>
+      {/* 2. MAIN LEADERBOARD TABLE */}
+      <div className="flex-1 overflow-auto custom-scrollbar relative">
+        <table className="w-full text-left text-xs border-collapse">
+          <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-[#121212] text-gray-400' : 'bg-gray-50 text-gray-500'}`}>
+            <tr>
+              <th className={`w-12 px-2 py-2 font-medium border-b border-r sticky left-0 z-20 ${theme === 'dark' ? 'border-[#222] bg-[#121212]' : 'border-gray-200 bg-gray-50'}`}>Rank</th>
+              <th className={`w-48 px-3 py-2 font-medium border-b border-r sticky left-12 z-20 ${theme === 'dark' ? 'border-[#222] bg-[#121212]' : 'border-gray-200 bg-gray-50'}`}>User</th>
+              <th className={`w-16 px-2 py-2 font-medium border-b border-r text-center ${theme === 'dark' ? 'border-[#222]' : 'border-gray-200'}`}>Score</th>
+              <th className={`w-16 px-2 py-2 font-medium border-b border-r text-center ${theme === 'dark' ? 'border-[#222]' : 'border-gray-200'}`}>Penalty</th>
+              {PROBLEMS.map(p => (
+                <th key={p} className={`w-20 px-2 py-2 font-medium border-b border-r text-center ${theme === 'dark' ? 'border-[#222]' : 'border-gray-200'}`}>{p}</th>
+              ))}
+              <th className={`px-3 py-2 font-medium border-b ${theme === 'dark' ? 'border-[#222]' : 'border-gray-200'}`}>Last Sub</th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${theme === 'dark' ? 'divide-[#1a1a1a]' : 'divide-gray-100'}`}>
+            {filteredLeaderboard.length > 0 ? (
+              filteredLeaderboard.map((entry) => (
+                <tr 
+                  key={entry.rank} 
+                  onClick={() => setSelectedUser(entry)}
+                  className={`group cursor-pointer transition-colors ${
+                    entry.username === 'meghram' 
+                      ? (theme === 'dark' ? 'bg-blue-500/5 hover:bg-blue-500/10' : 'bg-blue-50 hover:bg-blue-100')
+                      : (theme === 'dark' ? 'hover:bg-[#1a1a1a]' : 'hover:bg-gray-50')
+                  }`}
+                >
+                  <td className={`px-2 py-1.5 font-mono text-center border-r sticky left-0 z-10 ${theme === 'dark' ? 'border-[#222] bg-inherit group-hover:bg-[#1a1a1a]' : 'border-gray-200 bg-inherit group-hover:bg-gray-50'}`}>
+                     {entry.rank}
+                  </td>
+                  <td className={`px-3 py-1.5 border-r sticky left-12 z-10 ${theme === 'dark' ? 'border-[#222] bg-inherit group-hover:bg-[#1a1a1a]' : 'border-gray-200 bg-inherit group-hover:bg-gray-50'}`}>
+                    <div className="flex flex-col justify-center">
+                      <div className={`font-medium truncate max-w-[150px] ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+                        {entry.country} {entry.username}
                       </div>
+                      {entry.handle && <div className="text-[10px] opacity-50">{entry.handle}</div>}
                     </div>
-
-                    <div>
-                      <p className="text-xs text-white/60 mb-1" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                        MONTHLY RANK CHANGE
-                      </p>
-                      <div className="flex items-center gap-1">
-                        <TrendingDown className="w-5 h-5 text-red-500" />
-                        <p className="text-2xl text-red-500" style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                          {leaderboardImpact.monthlyChange}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={navigationProps.onLeaderboard}
-                    className="w-full bg-[#00FFFF]/20 text-[#00FFFF] border border-[#00FFFF]/40 hover:bg-[#00FFFF]/30"
-                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                  >
-                    View Leaderboard
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* AI Contest Insights */}
-            <Card className="bg-[#1A1A1A]/80 border-[#00FFFF]/20 mb-6">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                  <Brain className="w-5 h-5 text-purple-500" />
-                  AI Contest Insights
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
-                    <p className="text-sm text-white/80">
-                      You performed strongly in medium difficulty problems
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5" />
-                    <p className="text-sm text-white/80">
-                      Lost time in debugging hard constraints
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <ChevronRight className="w-4 h-4 text-[#00FFFF] mt-0.5" />
-                    <p className="text-sm text-white/80">
-                      Suggested focus: Practice graph algorithms under time pressure
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {/* Admin Controls */}
-        {isAdmin && (
-          <>
-            <Card className="bg-[#1A1A1A]/80 border-red-500/30 mb-6">
-              <CardHeader>
-                <CardTitle className="text-red-500 flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                  <AlertTriangle className="w-5 h-5" />
-                  Admin Controls
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <Button
-                    variant="outline"
-                    className="border-[#00FFFF]/30 text-[#00FFFF] hover:bg-[#00FFFF]/10"
-                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Rejudge
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="border-red-500/30 text-red-400 hover:bg-red-500/10"
-                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                  >
-                    <Ban className="w-4 h-4 mr-2" />
-                    Disqualify
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10"
-                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Plagiarism
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="border-[#00FFFF]/30 text-[#00FFFF] hover:bg-[#00FFFF]/10"
-                    style={{ fontFamily: 'JetBrains Mono, monospace' }}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Export CSV
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Admin Logs */}
-            <Card className="bg-[#1A1A1A]/80 border-red-500/30 mb-6">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                  <FileText className="w-5 h-5 text-red-500" />
-                  Admin Audit Log
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {adminLogs.map((log) => (
-                    <div 
-                      key={log.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-[#0A0F1C]/50 border border-white/5"
-                    >
-                      <p className="text-white text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                        {log.action}
-                      </p>
-                      <p className="text-xs text-white/60" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                        {log.timestamp}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
+                  </td>
+                  <td className={`px-2 py-1.5 text-center font-bold border-r ${theme === 'dark' ? 'border-[#222] text-white' : 'border-gray-200 text-black'}`}>
+                    {entry.score}
+                  </td>
+                  <td className={`px-2 py-1.5 text-center font-mono opacity-70 border-r ${theme === 'dark' ? 'border-[#222]' : 'border-gray-200'}`}>
+                    {entry.penalty}
+                  </td>
+                  
+                  {PROBLEMS.map(p => {
+                    const prob = entry.problems[p];
+                    return (
+                      <td 
+                        key={p} 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (prob.status !== 'SKIPPED') setSelectedProblem({ user: entry.username, problem: p });
+                        }}
+                        className={`px-2 py-1.5 text-center border-r cursor-pointer ${theme === 'dark' ? 'border-[#222]' : 'border-gray-200'} ${getStatusBg(prob.status)}`}
+                      >
+                        {prob.status === 'AC' ? (
+                          <div className="flex flex-col items-center">
+                             <span className="text-green-500 font-bold leading-none">{prob.time}</span>
+                             {prob.attempts > 1 && <span className="text-[9px] text-red-400 mt-0.5">(-{prob.attempts - 1})</span>}
+                          </div>
+                        ) : prob.status === 'SKIPPED' ? (
+                          <span className="opacity-20">-</span>
+                        ) : (
+                          <div className="flex flex-col items-center">
+                             <span className="text-red-500 font-bold leading-none">-{prob.attempts}</span>
+                          </div>
+                        )}
+                      </td>
+                    );
+                  })}
+                  
+                  <td className={`px-3 py-1.5 font-mono opacity-60 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {entry.lastSubmission}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={10} className="px-4 py-8 text-center text-xs opacity-50">
+                  No matching results found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {/* 6. PROBLEM SUMMARY ROW (BOTTOM, FIXED) */}
+      <footer className={`h-8 border-t flex items-center px-4 text-[10px] shrink-0 ${theme === 'dark' ? 'bg-[#121212] border-[#222] text-gray-500' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+         <span className="uppercase tracking-wider font-bold mr-3 opacity-70">Solved by:</span>
+         <div className="flex gap-4 font-mono">
+            <span>A: <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>82%</span></span>
+            <span className="opacity-30">|</span>
+            <span>B: <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>61%</span></span>
+            <span className="opacity-30">|</span>
+            <span>C: <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>24%</span></span>
+            <span className="opacity-30">|</span>
+            <span>D: <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>9%</span></span>
+         </div>
+      </footer>
+
+      {/* 5. USER DETAILS DRAWER (SIDE MODAL) */}
+      <AnimatePresence>
+        {selectedUser && (
+          <>
+            <motion.div 
+               initial={{ opacity: 0 }} 
+               animate={{ opacity: 1 }} 
+               exit={{ opacity: 0 }}
+               onClick={() => setSelectedUser(null)}
+               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+            />
+            <motion.div 
+               initial={{ x: '100%' }} 
+               animate={{ x: 0 }} 
+               exit={{ x: '100%' }}
+               transition={{ type: 'tween', duration: 0.2 }}
+               className={`fixed top-0 right-0 bottom-0 w-[400px] shadow-2xl z-40 flex flex-col ${theme === 'dark' ? 'bg-[#121212] border-l border-[#222]' : 'bg-white border-l border-gray-200'}`}
+            >
+               <div className={`flex items-center justify-between px-4 py-3 border-b ${theme === 'dark' ? 'border-[#222]' : 'border-gray-200'}`}>
+                  <div>
+                     <h2 className={`font-bold text-lg ${theme === 'dark' ? 'text-white' : 'text-black'}`}>{selectedUser.username}</h2>
+                     <div className="text-xs opacity-60 font-mono">Rank #{selectedUser.rank} • Score: {selectedUser.score}</div>
+                  </div>
+                  <button onClick={() => setSelectedUser(null)} className="p-1 hover:bg-white/10 rounded"><X className="w-5 h-5" /></button>
+               </div>
+               
+               <div className="flex-1 overflow-y-auto p-0">
+                  <div className={`px-4 py-2 text-[10px] uppercase font-bold tracking-wider opacity-50 ${theme === 'dark' ? 'bg-[#1a1a1a]' : 'bg-gray-50'}`}>Submissions History</div>
+                  <div className={`divide-y ${theme === 'dark' ? 'divide-[#222]' : 'divide-gray-100'}`}>
+                     {Object.entries(selectedUser.problems).map(([probCode, result]) => (
+                        <div key={probCode} className={`p-4 hover:bg-white/5 transition-colors ${result.status === 'SKIPPED' ? 'opacity-50' : ''}`}>
+                           <div className="flex items-center justify-between mb-2">
+                              <span className="font-bold text-sm">Problem {probCode}</span>
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded ${getStatusBg(result.status)} ${getStatusColor(result.status)}`}>
+                                 {result.status}
+                              </span>
+                           </div>
+                           <div className="flex items-center gap-4 text-xs opacity-70 font-mono">
+                              {result.time && <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {result.time}</div>}
+                              <div className="flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Attempts: {result.attempts}</div>
+                           </div>
+                           {result.status !== 'SKIPPED' && (
+                              <button className={`w-full mt-3 py-1.5 text-xs font-medium rounded border flex items-center justify-center gap-2 transition-colors ${theme === 'dark' ? 'border-[#333] hover:bg-[#222]' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                 <Code2 className="w-3 h-3" /> View Code
+                              </button>
+                           )}
+                        </div>
+                     ))}
+                  </div>
+               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* PROBLEM CELL POPUP */}
+      <AnimatePresence>
+        {selectedProblem && (
+           <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
+           >
+              {/* Using a simplified centered modal for this demo, typically would attach to cell */}
+              <div className={`w-64 rounded-lg shadow-xl pointer-events-auto p-4 border ${theme === 'dark' ? 'bg-[#1a1a1a] border-[#333]' : 'bg-white border-gray-200'}`}>
+                 <div className="flex justify-between items-center mb-3">
+                    <span className="font-bold text-sm">Problem {selectedProblem.problem}</span>
+                    <button onClick={() => setSelectedProblem(null)}><X className="w-4 h-4 opacity-50 hover:opacity-100" /></button>
+                 </div>
+                 <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                       <span className="opacity-60">User:</span>
+                       <span className="font-mono">{selectedProblem.user}</span>
+                    </div>
+                    <div className="flex justify-between">
+                       <span className="opacity-60">Verdict:</span>
+                       <span className="text-green-500 font-bold">Accepted</span>
+                    </div>
+                    <div className="flex justify-between">
+                       <span className="opacity-60">Time:</span>
+                       <span className="font-mono">00:12</span>
+                    </div>
+                    <div className="flex justify-between">
+                       <span className="opacity-60">Memory:</span>
+                       <span className="font-mono">1.2 MB</span>
+                    </div>
+                 </div>
+                 <button className="w-full mt-3 py-1 bg-blue-600 text-white rounded text-xs font-medium">View Source</button>
+              </div>
+           </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
